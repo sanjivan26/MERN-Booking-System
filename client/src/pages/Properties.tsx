@@ -1,91 +1,117 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // To check if user is logged in
+import { useAuth } from "../context/AuthContext";
 
-interface Property {
-  _id: string;
-  title: string;
-  location: string;
-  pricePerNight: number;
-  description: string;
-}
-
-const Properties = () => {
-  const [properties, setProperties] = useState<Property[]>([]);
+export default function Properties() {
+  const { token } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
-  const { token } = useAuth(); // Token indicates login
+  const [dates, setDates] = useState<{
+    [key: string]: { start: string; end: string };
+  }>({});
 
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        const res = await axiosInstance.get("/properties");
-        setProperties(res.data);
-      } catch (err: any) {
-        setError("Failed to load properties");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProperties();
+    axiosInstance
+      .get("/properties")
+      .then((res) => setProperties(res.data))
+      .catch(() => setProperties([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this property?")) return;
+  const handleBooking = async (propertyId: string) => {
+    if (!token) {
+      alert("Please log in to book.");
+      return;
+    }
+
+    const startDate = dates[propertyId]?.start;
+    const endDate = dates[propertyId]?.end;
+
+    if (!startDate || !endDate) {
+      alert("Please select start and end dates.");
+      return;
+    }
 
     try {
-      await axiosInstance.delete(`/properties/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setProperties((prev) => prev.filter((prop) => prop._id !== id));
-    } catch (error) {
-      alert("Failed to delete property.");
+      await axiosInstance.post(
+        "/bookings",
+        { propertyId, startDate, endDate },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Booking successful!");
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      alert("Booking failed.");
     }
   };
 
-  if (loading) return <p className="text-center">Loading properties...</p>;
-  if (error) return <p className="text-center text-red-500">{error}</p>;
+  if (loading) return <p>Loading properties...</p>;
 
   return (
-    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-      {properties.map((prop) => (
-        <div key={prop._id} className="border p-4 shadow rounded">
-          <h2 className="font-bold text-xl">{prop.title}</h2>
-          <p className="text-gray-500">{prop.location}</p>
-          <p className="mt-2 text-green-600">${prop.pricePerNight} / night</p>
-          <p className="text-sm mt-2">{prop.description}</p>
-          <div className="mt-4 flex gap-2">
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => navigate(`/book/${prop._id}`)}
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">Available Properties</h2>
+
+      {properties.length === 0 ? (
+        <p>No properties found.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {properties.map((property) => (
+            <div
+              key={property._id}
+              className="border p-4 rounded bg-gray-900 text-white"
             >
-              Book Now
-            </button>
-            {token && (
-              <>
-                <button
-                  className="bg-yellow-500 text-white px-4 py-2 rounded"
-                  onClick={() => navigate(`/edit-property/${prop._id}`)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="bg-red-500 text-white px-4 py-2 rounded"
-                  onClick={() => handleDelete(prop._id)}
-                >
-                  Delete
-                </button>
-              </>
-            )}
-          </div>
+              <h3 className="text-lg font-bold">{property.name}</h3>
+              <p>{property.location}</p>
+              <p>${property.pricePerNight} / night</p>
+              <p className="text-sm">{property.description}</p>
+
+              {/* Date pickers */}
+              <div className="mt-4 flex flex-col gap-2">
+                <label className="text-gray-200 text-sm">Start Date</label>
+                <input
+                  type="date"
+                  value={dates[property._id]?.start || ""}
+                  onChange={(e) =>
+                    setDates((prev) => ({
+                      ...prev,
+                      [property._id]: {
+                        ...prev[property._id],
+                        start: e.target.value,
+                      },
+                    }))
+                  }
+                  className="p-2 rounded bg-gray-800 text-gray-200 border border-gray-600"
+                />
+
+                <label className="text-gray-200 text-sm">End Date</label>
+                <input
+                  type="date"
+                  value={dates[property._id]?.end || ""}
+                  onChange={(e) =>
+                    setDates((prev) => ({
+                      ...prev,
+                      [property._id]: {
+                        ...prev[property._id],
+                        end: e.target.value,
+                      },
+                    }))
+                  }
+                  className="p-2 rounded bg-gray-800 text-gray-200 border border-gray-600"
+                />
+              </div>
+
+              {/* Book button */}
+              <button
+                onClick={() => handleBooking(property._id)}
+                className="mt-3 bg-purple-600 px-4 py-2 rounded text-white"
+              >
+                Book Now
+              </button>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
-};
-
-export default Properties;
+}

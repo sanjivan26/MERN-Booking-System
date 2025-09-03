@@ -17,7 +17,6 @@ const LoginElement = () => {
 
       const res = await axiosInstance.post("/auth/login", { email, password });
       login(res.data.token, res.data.name);
-      console.log("checkpoint");
       navigate("/");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

@@ -5,11 +5,12 @@ import { useAuth } from "../context/AuthContext";
 interface Booking {
   _id: string;
   property: {
-    title: string;
+    name: string;
     location: string;
   };
-  checkIn: string;
-  checkOut: string;
+  startDate: string;
+  endDate: string;
+  totalPrice: number;
 }
 
 const Bookings = () => {
@@ -43,12 +44,20 @@ const Bookings = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {bookings.map((booking) => (
-            <div key={booking._id} className="border p-4 rounded shadow">
-              <h3 className="font-bold">{booking.property.title}</h3>
-              <p>{booking.property.location}</p>
-              <p>
-                {new Date(booking.checkIn).toLocaleDateString()} -{" "}
-                {new Date(booking.checkOut).toLocaleDateString()}
+            <div
+              key={booking._id}
+              className="border p-4 rounded shadow bg-gray-900 text-gray-200"
+            >
+              <h3 className="font-bold text-lg">{booking.property.name}</h3>
+              <p className="text-sm text-gray-400">
+                {booking.property.location}
+              </p>
+              <p className="mt-2">
+                {new Date(booking.startDate).toLocaleDateString()} →{" "}
+                {new Date(booking.endDate).toLocaleDateString()}
+              </p>
+              <p className="mt-1 font-semibold text-purple-400">
+                Total: ${booking.totalPrice}
               </p>
             </div>
           ))}

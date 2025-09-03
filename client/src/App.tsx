@@ -8,7 +8,6 @@ import BookingForm from "./pages/BookingForm";
 import EditProperty from "./pages/EditProperty";
 import AddProperty from "./pages/AddProperty";
 import LoginElement from "./pages/Login";
-import PropertyForm from "./pages/PropertyForm";
 import AdminView from "./pages/AdminView";
 
 function App() {
@@ -20,11 +19,11 @@ function App() {
           <Route path="/" element={<Properties />} />
           <Route path="/login" element={<LoginElement />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/properties" element={<Properties />} />
           <Route path="/add-property" element={<AddProperty />} />
           <Route path="/edit-property/:id" element={<EditProperty />} />
           <Route path="/book/:id" element={<BookingForm />} />
           <Route path="/bookings" element={<Bookings />} />
-          <Route path="/add-property" element={<PropertyForm />} />
           <Route path="/admin" element={<AdminView />} />
         </Routes>
       </Router>
